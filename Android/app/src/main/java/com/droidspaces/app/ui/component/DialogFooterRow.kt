@@ -51,11 +51,15 @@ fun DialogFooterRow(
                 Text(dismissLabel, style = MaterialTheme.typography.labelLarge, fontWeight = textFontWeight)
             }
         }
+        val confirmBtnColor = if (confirmEnabled) confirmColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+        val confirmAccent = if (confirmEnabled) confirmColor else MaterialTheme.colorScheme.outlineVariant
+        val confirmTextColor = if (confirmEnabled) confirmColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+
         Surface(
             modifier = Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).clickable(enabled = confirmEnabled, onClick = onConfirm),
             shape = RoundedCornerShape(14.dp),
-            color = if (confirmEnabled) confirmColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-            border = BorderStroke(1.dp, if (confirmEnabled) confirmColor.copy(alpha = 0.25f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+            color = confirmBtnColor,
+            border = BorderStroke(1.dp, confirmAccent.copy(alpha = 0.35f)),
             tonalElevation = 0.dp
         ) {
             Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
@@ -63,7 +67,7 @@ fun DialogFooterRow(
                     confirmLabel,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = textFontWeight,
-                    color = if (confirmEnabled) confirmContentColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    color = confirmTextColor
                 )
             }
         }
