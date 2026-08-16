@@ -260,36 +260,38 @@ fun ContainerTerminalScreen(
                         indicator = {},
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp)
+                            .padding(vertical = 4.dp)
                     ) {
                         tabs.forEach { tab ->
                             val isSelected = tab.id == activeTabId
+                            val tabColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+                            val tabBorder = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                             Surface(
                                 modifier = Modifier
-                                    .padding(horizontal = 4.dp)
+                                    .padding(horizontal = 3.dp)
+                                    .height(36.dp)
                                     .clip(RoundedCornerShape(16.dp))
                                     .combinedClickable(
                                         onClick = { activeTabId = tab.id },
                                         onLongClick = { tabToClose = tab }
                                     ),
                                 shape = RoundedCornerShape(16.dp),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-                                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                                ),
+                                color = tabColor,
+                                border = BorderStroke(1.dp, tabBorder),
                                 tonalElevation = 0.dp
                             ) {
                                 Box(
-                                    modifier = Modifier.padding(14.dp),
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .padding(horizontal = 12.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         tab.label,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
