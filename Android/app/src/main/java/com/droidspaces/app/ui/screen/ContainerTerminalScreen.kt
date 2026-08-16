@@ -8,8 +8,6 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -21,12 +19,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -255,36 +251,36 @@ fun ContainerTerminalScreen(
                 )
 
                 if (tabs.isNotEmpty()) {
-                    ScrollableTabRow(
-                        selectedTabIndex = currentTabIndex,
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        edgePadding = 12.dp,
-                        divider = {},
-                        indicator = {},
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+                        tonalElevation = 0.dp
                     ) {
-                        tabs.forEach { tab ->
-                            val isSelected = tab.id == activeTabId
-                            // Separate double-outline card for EACH individual tab name
-                            Surface(
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
-                                tonalElevation = 0.dp
-                            ) {
+                        ScrollableTabRow(
+                            selectedTabIndex = currentTabIndex,
+                            containerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            edgePadding = 4.dp,
+                            divider = {},
+                            indicator = {},
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp)
+                        ) {
+                            tabs.forEach { tab ->
+                                val isSelected = tab.id == activeTabId
                                 Surface(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(11.dp))
+                                        .clip(RoundedCornerShape(16.dp))
                                         .combinedClickable(
                                             onClick = { activeTabId = tab.id },
                                             onLongClick = { tabToClose = tab }
                                         ),
-                                    shape = RoundedCornerShape(11.dp),
+                                    shape = RoundedCornerShape(16.dp),
                                     color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                                             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
                                     border = BorderStroke(
@@ -295,7 +291,7 @@ fun ContainerTerminalScreen(
                                     tonalElevation = 0.dp
                                 ) {
                                     Box(
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
@@ -311,7 +307,7 @@ fun ContainerTerminalScreen(
                             }
                         }
                     }
-                    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 }
             }
         }
@@ -380,18 +376,16 @@ private fun TerminalTabView(
     val terminalBackground = if (terminalDarkTheme) Color.Black.toArgb() else 0
     val virtualKeysBackground = if (terminalDarkTheme) Color(0xFF1A1A1E) else MaterialTheme.colorScheme.surfaceContainerHighest
 
-    val slideOffsetPx = with(density) { 48.dp.roundToPx() }
-
     AnimatedVisibility(
         visible = isVisible,
         enter = slideInHorizontally(
-            initialOffsetX = { if (isMovingForward) slideOffsetPx else -slideOffsetPx },
-            animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)
-        ) + fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)),
+            initialOffsetX = { if (isMovingForward) (it * 0.08f).toInt() else -(it * 0.08f).toInt() },
+            animationSpec = AnimationUtils.mediumSpec()
+        ) + fadeIn(animationSpec = AnimationUtils.fastSpec()),
         exit = slideOutHorizontally(
-            targetOffsetX = { if (isMovingForward) -slideOffsetPx else slideOffsetPx },
-            animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)
-        ) + fadeOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)),
+            targetOffsetX = { if (isMovingForward) -(it * 0.08f).toInt() else (it * 0.08f).toInt() },
+            animationSpec = AnimationUtils.mediumSpec()
+        ) + fadeOut(animationSpec = AnimationUtils.fastSpec()),
         modifier = modifier
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
