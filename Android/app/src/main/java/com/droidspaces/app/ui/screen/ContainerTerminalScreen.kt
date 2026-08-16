@@ -251,58 +251,49 @@ fun ContainerTerminalScreen(
                 )
 
                 if (tabs.isNotEmpty()) {
-                    Surface(
+                    ScrollableTabRow(
+                        selectedTabIndex = currentTabIndex,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        edgePadding = 12.dp,
+                        divider = {},
+                        indicator = {},
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
-                        tonalElevation = 0.dp
+                            .padding(vertical = 6.dp)
                     ) {
-                        ScrollableTabRow(
-                            selectedTabIndex = currentTabIndex,
-                            containerColor = Color.Transparent,
-                            contentColor = MaterialTheme.colorScheme.primary,
-                            edgePadding = 4.dp,
-                            divider = {},
-                            indicator = {},
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp)
-                        ) {
-                            tabs.forEach { tab ->
-                                val isSelected = tab.id == activeTabId
-                                Surface(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .combinedClickable(
-                                            onClick = { activeTabId = tab.id },
-                                            onLongClick = { tabToClose = tab }
-                                        ),
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                                    border = BorderStroke(
-                                        1.dp,
-                                        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-                                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                        tabs.forEach { tab ->
+                            val isSelected = tab.id == activeTabId
+                            Surface(
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .combinedClickable(
+                                        onClick = { activeTabId = tab.id },
+                                        onLongClick = { tabToClose = tab }
                                     ),
-                                    tonalElevation = 0.dp
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                ),
+                                tonalElevation = 0.dp
+                            ) {
+                                Box(
+                                    modifier = Modifier.padding(14.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Box(
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            tab.label,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
+                                    Text(
+                                        tab.label,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
                             }
                         }
