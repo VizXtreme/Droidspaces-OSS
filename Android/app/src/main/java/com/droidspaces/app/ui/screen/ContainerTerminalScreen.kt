@@ -106,6 +106,19 @@ fun ContainerTerminalScreen(
     var showUserPicker by remember { mutableStateOf(false) }
     var tabToClose by remember { mutableStateOf<TerminalTab?>(null) }
 
+    val currentTabIndex = remember(activeTabId, tabs.size) {
+        tabs.indexOfFirst { it.id == activeTabId }.coerceAtLeast(0)
+    }
+    var previousTabIndex by remember { mutableIntStateOf(currentTabIndex) }
+    var isMovingForward by remember { mutableStateOf(true) }
+
+    LaunchedEffect(currentTabIndex) {
+        if (currentTabIndex != previousTabIndex) {
+            isMovingForward = currentTabIndex > previousTabIndex
+            previousTabIndex = currentTabIndex
+        }
+    }
+
     // Resolve hostname reactively; picker is shown only after binder+hostname are both ready
     var hostname by remember(containerName) {
         mutableStateOf(
@@ -240,32 +253,37 @@ fun ContainerTerminalScreen(
                 )
 
                 if (tabs.isNotEmpty()) {
-                    ScrollableTabRow(
-                        selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceAtLeast(0),
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        edgePadding = 12.dp,
-                        divider = {},
-                        indicator = {},
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+                        tonalElevation = 0.dp
                     ) {
-                        tabs.forEach { tab ->
-                            val isSelected = tab.id == activeTabId
-                            Surface(
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
-                                tonalElevation = 0.dp
-                            ) {
+                        ScrollableTabRow(
+                            selectedTabIndex = currentTabIndex,
+                            containerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            edgePadding = 4.dp,
+                            divider = {},
+                            indicator = {},
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp)
+                        ) {
+                            tabs.forEach { tab ->
+                                val isSelected = tab.id == activeTabId
                                 Surface(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(13.dp))
+                                        .padding(horizontal = 2.dp)
+                                        .clip(RoundedCornerShape(14.dp))
                                         .combinedClickable(
                                             onClick = { activeTabId = tab.id },
                                             onLongClick = { tabToClose = tab }
                                         ),
-                                    shape = RoundedCornerShape(13.dp),
+                                    shape = RoundedCornerShape(14.dp),
                                     color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                                             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
                                     border = BorderStroke(
@@ -315,6 +333,7 @@ fun ContainerTerminalScreen(
                             binder = binder!!,
                             containerName = containerName,
                             isVisible = tab.id == activeTabId,
+                            isMovingForward = isMovingForward,
                             activity = activity,
                             onSessionFinished = { closeTab(tab) },
                             modifier = Modifier.fillMaxSize()
@@ -332,6 +351,7 @@ private fun TerminalTabView(
     binder: TerminalSessionService.SessionBinder,
     containerName: String,
     isVisible: Boolean,
+    isMovingForward: Boolean,
     activity: Activity?,
     onSessionFinished: () -> Unit,
     modifier: Modifier = Modifier,
@@ -359,14 +379,22 @@ private fun TerminalTabView(
     val terminalBackground = if (terminalDarkTheme) Color.Black.toArgb() else 0
     val virtualKeysBackground = if (terminalDarkTheme) Color(0xFF1A1A1E) else MaterialTheme.colorScheme.surfaceContainerHighest
 
+    val slideDistance = 0.08f
+
     AnimatedVisibility(
         visible = isVisible,
         enter = slideInHorizontally(
-            initialOffsetX = { (it * 0.08f).toInt() },
+            initialOffsetX = { fullWidth ->
+                val sign = if (isMovingForward) 1 else -1
+                (fullWidth * slideDistance * sign).toInt()
+            },
             animationSpec = AnimationUtils.mediumSpec()
         ) + fadeIn(animationSpec = AnimationUtils.fastSpec()),
         exit = slideOutHorizontally(
-            targetOffsetX = { (-it * 0.08f).toInt() },
+            targetOffsetX = { fullWidth ->
+                val sign = if (isMovingForward) -1 else 1
+                (fullWidth * slideDistance * sign).toInt()
+            },
             animationSpec = AnimationUtils.mediumSpec()
         ) + fadeOut(animationSpec = AnimationUtils.fastSpec()),
         modifier = modifier
