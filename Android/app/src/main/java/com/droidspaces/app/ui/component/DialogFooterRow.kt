@@ -55,6 +55,7 @@ fun DialogFooterRow(
             modifier = Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).clickable(enabled = confirmEnabled, onClick = onConfirm),
             shape = RoundedCornerShape(14.dp),
             color = if (confirmEnabled) confirmColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+            border = BorderStroke(1.dp, if (confirmEnabled) confirmColor.copy(alpha = 0.25f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
             tonalElevation = 0.dp
         ) {
             Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
