@@ -10,6 +10,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.droidspaces.app.service.TerminalSessionService
+import com.droidspaces.app.ui.component.DialogFooterRow
 import com.droidspaces.app.ui.terminal.TerminalBackEnd
 import com.droidspaces.app.ui.terminal.TerminalScreenState
 import com.droidspaces.app.ui.terminal.virtualkeys.VirtualKeysConstants
@@ -59,7 +65,7 @@ private data class TerminalTab(
     val label: String,
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ContainerTerminalScreen(
     containerName: String,
@@ -98,6 +104,7 @@ fun ContainerTerminalScreen(
     val tabs = remember { mutableStateListOf<TerminalTab>() }
     var activeTabId by remember { mutableStateOf("") }
     var showUserPicker by remember { mutableStateOf(false) }
+    var tabToClose by remember { mutableStateOf<TerminalTab?>(null) }
 
     // Resolve hostname reactively; picker is shown only after binder+hostname are both ready
     var hostname by remember(containerName) {
@@ -192,10 +199,22 @@ fun ContainerTerminalScreen(
         )
     }
 
+    if (tabToClose != null) {
+        CloseSessionConfirmationDialog(
+            tabLabel = tabToClose!!.label,
+            onConfirm = {
+                val target = tabToClose!!
+                tabToClose = null
+                closeTab(target)
+            },
+            onDismiss = { tabToClose = null }
+        )
+    }
+
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(
+                CenterAlignedTopAppBar(
                     title = {
                         Text(
                             containerName,
@@ -215,7 +234,7 @@ fun ContainerTerminalScreen(
                             Icon(Icons.Default.Add, contentDescription = "New tab")
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                     )
                 )
@@ -225,46 +244,49 @@ fun ContainerTerminalScreen(
                         selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceAtLeast(0),
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         contentColor = MaterialTheme.colorScheme.primary,
-                        edgePadding = 0.dp,
+                        edgePadding = 12.dp,
                         divider = {},
-                        modifier = Modifier.fillMaxWidth()
+                        indicator = {},
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                     ) {
                         tabs.forEach { tab ->
                             val isSelected = tab.id == activeTabId
-                            Tab(
-                                selected = isSelected,
-                                onClick = { activeTabId = tab.id },
-                                modifier = Modifier.height(40.dp)
+                            Surface(
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+                                tonalElevation = 0.dp
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                Surface(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(13.dp))
+                                        .combinedClickable(
+                                            onClick = { activeTabId = tab.id },
+                                            onLongClick = { tabToClose = tab }
+                                        ),
+                                    shape = RoundedCornerShape(13.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                    ),
+                                    tonalElevation = 0.dp
                                 ) {
-                                    Text(
-                                        tab.label,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.widthIn(max = 120.dp)
-                                    )
                                     Box(
-                                        Modifier.size(16.dp).clip(CircleShape),
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        IconButton(
-                                            onClick = { closeTab(tab) },
-                                            modifier = Modifier.size(16.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = "Close tab",
-                                                modifier = Modifier.size(12.dp),
-                                                tint = if (isSelected) MaterialTheme.colorScheme.primary
-                                                       else MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
+                                        Text(
+                                            tab.label,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
                                     }
                                 }
                             }
@@ -339,8 +361,14 @@ private fun TerminalTabView(
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(animationSpec = AnimationUtils.fastSpec()),
-        exit = fadeOut(animationSpec = AnimationUtils.fastSpec()),
+        enter = slideInHorizontally(
+            initialOffsetX = { (it * 0.08f).toInt() },
+            animationSpec = AnimationUtils.mediumSpec()
+        ) + fadeIn(animationSpec = AnimationUtils.fastSpec()),
+        exit = slideOutHorizontally(
+            targetOffsetX = { (-it * 0.08f).toInt() },
+            animationSpec = AnimationUtils.mediumSpec()
+        ) + fadeOut(animationSpec = AnimationUtils.fastSpec()),
         modifier = modifier
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -563,6 +591,59 @@ private fun UserPickerDialog(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CloseSessionConfirmationDialog(
+    tabLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val dialogShape = RoundedCornerShape(28.dp)
+
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .wrapContentHeight(),
+            shape = dialogShape,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+            tonalElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Close this session?",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = "Are you sure you want to close session \"$tabLabel\"?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+
+                DialogFooterRow(
+                    dismissLabel = context.getString(android.R.string.cancel),
+                    confirmLabel = context.getString(R.string.ok),
+                    onDismiss = onDismiss,
+                    onConfirm = onConfirm,
+                    confirmColor = MaterialTheme.colorScheme.error,
+                    confirmContentColor = MaterialTheme.colorScheme.onError
+                )
             }
         }
     }
