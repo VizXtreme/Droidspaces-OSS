@@ -72,6 +72,7 @@ fun ContainerTerminalScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val terminalDarkTheme = remember { PreferencesManager.getInstance(context).terminalDarkTheme }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     var binder by remember { mutableStateOf<TerminalSessionService.SessionBinder?>(null) }
@@ -319,7 +320,7 @@ fun ContainerTerminalScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = paddingValues.calculateTopPadding())
-                .background(MaterialTheme.colorScheme.surface)
+                .background(if (terminalDarkTheme) Color.Black else MaterialTheme.colorScheme.surface)
         ) {
             if (binder == null || tabs.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
